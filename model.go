@@ -51,7 +51,9 @@ type PullLogRequest struct {
 	LogGroupMaxCount int
 	Query            string
 	// Deprecated: PullMode is not used
-	PullMode string
+	PullMode     string
+	QueryId      string
+	CompressType int
 }
 
 func (plr *PullLogRequest) ToURLParams() url.Values {
@@ -65,15 +67,24 @@ func (plr *PullLogRequest) ToURLParams() url.Values {
 	if plr.Query != "" {
 		urlVal.Add("query", plr.Query)
 		urlVal.Add("pullMode", "scan_on_stream")
+		if plr.QueryId != "" {
+			urlVal.Add("queryId", plr.QueryId)
+		}
 	}
 	return urlVal
 }
 
 type PullLogMeta struct {
 	NextCursor              string
+	Netflow                 int
 	RawSize                 int
-	RawSizeBeforeQuery      int
 	RawDataCountBeforeQuery int
+	// todo: add query meta
+	// Lines                   int
+	// RawSizeBeforeQuery      int
+	// LinesBeforeQuery        int
+	// FailedLines             int
+	// DataCountBeforeQuery    int
 }
 
 // GetHistogramsResponse defines response from GetHistograms call
@@ -311,3 +322,9 @@ const (
 	CHARGE_BY_FUNCTION    = "ChargeByFunction"
 	CHARGE_BY_DATA_INGEST = "ChargeByDataIngest"
 )
+
+type PostLogStoreLogsRequest struct {
+	LogGroup     *LogGroup
+	HashKey      *string
+	CompressType int
+}
