@@ -1,6 +1,6 @@
 module github.com/aliyun/aliyun-log-go-sdk
 
-go 1.13
+go 1.19
 
 require (
 	github.com/Netflix/go-env v0.0.0-20220526054621-78278af1949d
@@ -20,4 +20,8 @@ require (
 	golang.org/x/net v0.0.0-20201021035429-f5854403a974
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
+)
+
+retract (
+	v0.1.73
 )
