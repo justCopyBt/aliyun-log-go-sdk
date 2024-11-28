@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/go-kit/kit/log/level"
 )
 
 // GetLogRequest for GetLogsV2
@@ -75,10 +77,11 @@ func (plr *PullLogRequest) ToURLParams() url.Values {
 }
 
 type PullLogMeta struct {
-	NextCursor string
-	Netflow    int
-	RawSize    int
-	Count      int
+	NextCursor     string
+	Netflow        int
+	RawSize        int
+	Count          int
+	readLastCursor string // int64 string, eg: "1732154287213232020"
 	// these fields are only present when query is set
 	RawSizeBeforeQuery   int // processed raw size before query
 	Lines                int // result lines after query
@@ -374,4 +377,26 @@ type ListStoreViewsResponse struct {
 	Total      int      `json:"total"`
 	Count      int      `json:"count"`
 	StoreViews []string `json:"storeviews"`
+}
+
+// If cursor is unknown, returns empty string
+func (l *LogGroup) GetCursor() string {
+	return l.cursor
+}
+
+func (l *LogGroupList) addCursorIfPossible(readLastCursor string) error {
+	lastCursorInt, err := strconv.ParseInt(readLastCursor, 10, 64)
+	if err != nil {
+		if IsDebugLevelMatched(1) {
+			level.Error(Logger).Log("msg", "decode readLastCursor failed",
+				"cursor", readLastCursor, "err", err)
+		}
+		return err
+	}
+	cursor := lastCursorInt - int64(len(l.LogGroups)) + 1
+	for i := 0; i < len(l.LogGroups); i++ {
+		l.LogGroups[i].cursor = encodeCursor(cursor)
+		cursor++
+	}
+	return nil
 }
