@@ -51,6 +51,7 @@ type LogHubConfig struct {
 	//:param AutoCommitIntervalInSec: default auto commit interval, default is 30
 	//:param AuthVersion: signature algorithm version, default is sls.AuthV1
 	//:param Region: region of sls endpoint, eg. cn-hangzhou, region must be set if AuthVersion is sls.AuthV4
+	//:param DisableRuntimeMetrics: disable runtime metrics, runtime metrics prints to local log.
 	Endpoint                  string
 	AccessKeyID               string
 	AccessKeySecret           string
@@ -81,6 +82,7 @@ type LogHubConfig struct {
 	AutoCommitIntervalInMS    int64
 	AuthVersion               sls.AuthVersionType
 	Region                    string
+	DisableRuntimeMetrics     bool
 }
 
 const (
