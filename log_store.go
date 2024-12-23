@@ -351,18 +351,21 @@ func (s *LogStore) PutLogs(lg *LogGroup) (err error) {
 
 // PostLogStoreLogs put logs into Shard logstore by hashKey.
 // The callers should transform user logs into LogGroup.
-func (s *LogStore) PostLogStoreLogs(lg *LogGroup, hashKey *string) (err error) {
-	if len(lg.Logs) == 0 {
+func (s *LogStore) PostLogStoreLogs(req *PostLogStoreLogsRequest) (err error) {
+	if err = s.SetPutLogCompressType(req.CompressType); err != nil {
+		return err
+	}
+
+	if req.LogGroup == nil || len(req.LogGroup.Logs) == 0 {
 		// empty log group or empty hashkey
 		return nil
 	}
 
-	if hashKey == nil || *hashKey == "" || s.useMetricStoreURL {
-		// empty hash call PutLogs
-		return s.PutLogs(lg)
+	if s.useMetricStoreURL {
+		return s.PutLogs(req.LogGroup)
 	}
 
-	body, err := proto.Marshal(lg)
+	body, err := proto.Marshal(req.LogGroup)
 	if err != nil {
 		return NewClientError(err)
 	}
@@ -409,7 +412,19 @@ func (s *LogStore) PostLogStoreLogs(lg *LogGroup, hashKey *string) (err error) {
 		outLen = len(out)
 	}
 
-	uri := fmt.Sprintf("/logstores/%v/shards/route?key=%v", s.Name, *hashKey)
+	var uri = fmt.Sprintf("/logstores/%s", s.Name)
+	var params = url.Values{}
+	if req.HashKey != nil && *req.HashKey != "" {
+		params.Set("key", *req.HashKey)
+		uri = fmt.Sprintf("/logstores/%s/shards/route", s.Name)
+	}
+	if req.Processor != "" {
+		params.Set("processor", req.Processor)
+	}
+	if len(params) > 0 {
+		uri = fmt.Sprintf("%s?%s", uri, params.Encode())
+	}
+
 	r, err := request(s.project, "POST", uri, h, out[:outLen])
 	if err != nil {
 		return NewClientError(err)
