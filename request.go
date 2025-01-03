@@ -2,9 +2,11 @@ package sls
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -32,7 +34,31 @@ func newDefaultTransport() *http.Transport {
 // returns a new http client instance with default config
 func newDefaultHTTPClient(requestTimeout time.Duration) *http.Client {
 	return &http.Client{
-		Transport: &http.Transport{},
+			Transport: &http.Transport{
+			// 代理设置，默认从环境变量获取代理信息
+			Proxy: http.ProxyFromEnvironment,
+			// 建立TCP连接的函数，默认使用net.Dialer的默认配置来建立连接
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+				DualStack: true,
+			}).DialContext,
+			// 最大空闲连接数，默认是100
+			MaxIdleConns: 100,
+			// 空闲连接超时时间，默认是90秒
+			IdleConnTimeout: 90 * time.Second,
+			// 每个主机的最大空闲连接数，默认是2
+			MaxIdleConnsPerHost: 2,
+			// TLS客户端配置，默认使用标准的TLS配置（进行常规的证书验证等）
+			TLSClientConfig: &tls.Config{
+				MinVersion: tls.VersionTLS12,
+				CurvePreferences: []tls.CurveID{
+					tls.CurveP256,
+				},
+			},
+			// 是否强制使用HTTP/2，默认是false，根据服务器支持情况自动选择
+			ForceAttemptHTTP2: false,
+		},
 		Timeout:   requestTimeout,
 	}
 }
