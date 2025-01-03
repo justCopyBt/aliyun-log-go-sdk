@@ -32,7 +32,7 @@ func newDefaultTransport() *http.Transport {
 // returns a new http client instance with default config
 func newDefaultHTTPClient(requestTimeout time.Duration) *http.Client {
 	return &http.Client{
-		Transport: newDefaultTransport(),
+		Transport: &http.Transport{},
 		Timeout:   requestTimeout,
 	}
 }
